@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <style>
+    /* ================= BASE STYLES ================= */
+    :root {
+      --primary: #00796b; --primary-dark: #004d40; --primary-light: #e0f2f1;
+      --bg-color: #f4f7f6; --surface: #ffffff; --text-main: #2d3748; --text-muted: #718096;
+      --border-color: #e2e8f0; --radius: 12px;
+      --active-color: #38a169; --passive-color: #3182ce;
+      --shadow-sm: 0 2px 4px rgba(0,0,0,0.05); --shadow-md: 0 4px 12px rgba(0,0,0,0.08); --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px 10px; color: var(--text-main); }
+    
+    /* ================= HEADER & FOOTER ================= */
+    .app-header {
+      max-width: 1100px; margin: 0 auto 25px auto;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white; padding: 20px; border-radius: 12px;
+      text-align: center; font-weight: 700; letter-spacing: 0.5px; box-shadow: var(--shadow-md);
+    }
+    .app-footer { max-width: 1100px; margin: 40px auto 0 auto; text-align: center; padding-top: 20px; border-top: 2px solid var(--border-color); color: var(--text-muted); font-size: 13.5px; line-height: 1.6; }
+    .app-footer b { color: var(--primary-dark); font-weight: 600; }
+    .heart { color: #e53e3e; font-size: 14px; animation: heartbeat 1.5s infinite; display: inline-block; margin: 0 3px; }
+    @keyframes heartbeat { 0% { transform: scale(1); } 14% { transform: scale(1.3); } 28% { transform: scale(1); } 42% { transform: scale(1.3); } 70% { transform: scale(1); } }
+
+    /* ================= DASHBOARD LAYOUT ================= */
+    .dashboard-wrapper { display: flex; max-width: 1100px; margin: 0 auto; gap: 25px; align-items: flex-start; }
+
+    /* LEFT SIDEBAR */
+    .sidebar.tab-nav {
+      display: flex; flex-direction: column; width: 260px; background: var(--surface);
+      padding: 20px 15px; border-radius: var(--radius); box-shadow: var(--shadow-md);
+      position: sticky; top: 20px;
+    }
+    .sidebar-title { font-size: 14px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 15px; padding-left: 10px; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
+    
+    .tab-btn {
+      width: 100%; text-align: left; padding: 14px 20px; margin-bottom: 8px;
+      border: none; background: transparent; cursor: pointer; border-radius: 8px;
+      font-size: 15px; font-weight: 600; color: var(--text-muted); transition: all 0.3s ease;
+      border-left: 4px solid transparent; display: flex; align-items: center; gap: 12px;
+    }
+    .tab-btn:hover { background: #f8fafc; color: var(--primary); transform: translateX(4px); }
+    .tab-btn.active { background: var(--primary-light); color: var(--primary-dark); border-left: 4px solid var(--primary); font-weight: 700; }
+
+    /* RIGHT MAIN CONTENT */
+    .main-content { flex: 1; background: var(--surface); padding: 30px; border-radius: 16px; box-shadow: var(--shadow-lg); min-height: 500px; }
+    .tab-pane { display: none; animation: fadeIn 0.4s ease; }
+    .tab-pane.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ================= STATS CARDS ================= */
+    .stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .stat-card { background: #fff; border: 1px solid var(--border-color); padding: 20px; border-radius: 15px; box-shadow: var(--shadow-sm); text-align: center; }
+    .stat-card h4 { margin: 0; font-size: 14px; color: var(--text-muted); text-transform: uppercase; }
+    .stat-card .value { font-size: 32px; font-weight: 700; margin: 10px 0; color: var(--text-main); }
+    .stat-card .sub-text { font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 15px; display: inline-block; }
+    .card-total { border-bottom: 4px solid var(--primary); }
+    .card-active { border-bottom: 4px solid var(--active-color); }
+    .card-passive { border-bottom: 4px solid var(--passive-color); }
+    .chart-box { padding: 20px; border: 1px solid var(--border-color); border-radius: 15px; background: #fff; margin-bottom: 20px; height: 300px; display: flex; justify-content: center; align-items: center; box-shadow: var(--shadow-sm); }
+
+    /* ================= FORMS & BUTTONS ================= */
+    .form-group { margin-bottom: 18px; text-align: left; }
+    label { font-weight: 600; color: #4a5568; display: block; margin-bottom: 8px; font-size: 14px; }
+    input, select { width: 100%; padding: 14px; border-radius: 10px; border: 1.5px solid var(--border-color); font-size: 15px; font-family: 'Poppins', sans-serif; box-sizing: border-box; transition: all 0.3s; background-color: #f8fafc; color: var(--text-main); }
+    input:focus, select:focus { border-color: var(--primary); background-color: #fff; box-shadow: 0 0 0 4px rgba(0, 121, 107, 0.1); outline: none; }
+    .bundle-input { background: #fff5f5 !important; color: #e53e3e !important; font-weight: bold; border-color: #fed7d7 !important; }
+    .tot-input { background: #edf2f7 !important; color: #2b6cb0 !important; font-weight: bold; }
+
+    .entry-section { border: 1.5px solid var(--border-color); padding: 25px; border-radius: var(--radius); margin-bottom: 25px; background: #fafafa; transition: box-shadow 0.3s; }
+    .entry-section:hover { box-shadow: var(--shadow-md); border-color: #cbd5e0; }
+    .info-box { background: var(--primary-light); padding: 10px 15px; border-radius: 8px; font-size: 13px; margin-top: 8px; border-left: 4px solid var(--primary); font-weight: 500; color: var(--primary-dark); }
+    .village-entry { background: #fff; border: 1px solid var(--border-color); padding: 15px; border-radius: 10px; margin-top: 15px; box-shadow: var(--shadow-sm); }
+    .val-msg { color: #e53e3e; font-size: 13px; font-weight: 600; margin-top: 10px; text-align: center; background: #fff5f5; padding: 8px; border-radius: 6px; }
+
+    .submit-btn { background: var(--primary); color: white; padding: 16px; width: 100%; border: none; border-radius: 30px; font-size: 18px; cursor: pointer; font-weight: 600; transition: all 0.3s; box-shadow: 0 4px 10px rgba(0,121,107,0.3); }
+    .submit-btn:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,121,107,0.4); }
+    .report-btn { color: white; padding: 14px; width: 100%; border: none; border-radius: 10px; font-size: 15px; cursor: pointer; font-weight: 600; margin-top: 15px; transition: all 0.3s; }
+    .report-btn:hover { transform: translateY(-2px); filter: brightness(0.9); }
+    .add-btn { width: 100%; padding: 14px; margin-bottom: 20px; border-radius: 10px; border: 2px dashed var(--primary); background: rgba(0,121,107,0.02); color: var(--primary); font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 15px; }
+    .add-btn:hover { background: rgba(0,121,107,0.08); }
+    .back-btn { background: #e2e8f0; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-bottom: 20px; display: inline-flex; align-items: center; gap: 8px; color: #4a5568; transition: 0.3s; }
+    .back-btn:hover { background: #cbd5e0; color: #1a202c; }
+
+    /* ================= REPORT MENU ================= */
+    .report-menu-item { background: #fff; border: 1.5px solid var(--border-color); padding: 15px 20px; border-radius: 12px; margin-bottom: 15px; display: flex; align-items: center; cursor: pointer; transition: all 0.3s; box-shadow: var(--shadow-sm); }
+    .report-menu-item:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--primary); }
+    .rm-icon { font-size: 28px; margin-right: 15px; background: #f8fafc; padding: 10px; border-radius: 10px; }
+    .rm-details { flex-grow: 1; }
+    .rm-title { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 3px; display: block; }
+    .rm-desc { font-size: 13px; color: var(--text-muted); display: block; }
+    .report-card { display: none; animation: fadeIn 0.4s ease; background: #fff; border: 1px solid var(--border-color); padding: 25px; border-radius: var(--radius); margin-bottom: 25px; box-shadow: var(--shadow-sm); }
+    
+    .checkbox-list { background: #fff5f5; border: 1px solid #fed7d7; padding: 15px; border-radius: 10px; max-height: 220px; overflow-y: auto; margin-bottom: 15px; display: none; }
+    .checkbox-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-weight: 500; color: #742a2a; font-size: 14px; border-bottom: 1px dashed #fed7d7; }
+    .checkbox-item input[type="checkbox"] { width: 18px; height: 18px; margin: 0; cursor: pointer; }
+    .checkbox-header { border-bottom: 2px solid #feb2b2; padding-bottom: 10px; margin-bottom: 10px; font-weight: 700; color: #9b2c2c; }
+
+    /* ================= DOWNLOADS, GALLERY & LINKS ================= */
+    .dl-list { display: flex; flex-direction: column; gap: 12px; }
+    .dl-item { background: #fff; border: 1px solid var(--border-color); padding: 18px 20px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: var(--text-main); font-weight: 600; transition: all 0.2s; box-shadow: var(--shadow-sm); cursor: pointer; }
+    .dl-item:hover { border-color: var(--primary); transform: translateX(5px); box-shadow: var(--shadow-md); color: var(--primary); }
+    .folder-item { background: linear-gradient(to right, #fffde7, #fff9c4); border-color: #fbc02d; color: #f57f17; }
+    .folder-item:hover { border-color: #f57f17; transform: scale(1.02); }
+
+    .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; margin-top: 20px; }
+    .photo-card { background: #fff; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; transition: all 0.3s; }
+    .photo-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); }
+    .photo-card img { width: 100%; height: 140px; object-fit: cover; border-bottom: 1px solid #edf2f7; display: block; cursor: pointer; transition: opacity 0.3s; }
+    .photo-card img:hover { opacity: 0.85; }
+    .photo-caption { padding: 12px; text-align: left; background: #fff; flex-grow: 1; word-wrap: break-word; white-space: normal; }
+    .photo-title { color: var(--primary-dark); font-weight: 600; font-size: 14px; margin-bottom: 4px; display: block; }
+    
+    .photo-folder-card { background: linear-gradient(145deg, #fff9c4, #fff176); border: 1px solid #fbc02d; border-radius: 12px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; padding: 30px 15px; transition: 0.3s; text-align: center; }
+    .photo-folder-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); }
+
+    .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(15, 23, 42, 0.95); backdrop-filter: blur(5px); }
+    .modal-content { margin: auto; display: block; max-width: 90%; max-height: 75vh; margin-top: 40px; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); object-fit: contain; }
+    .modal-caption { margin: auto; display: block; width: 90%; max-width: 800px; text-align: center; color: #fff; padding: 20px 0; font-size: 16px; line-height: 1.6; }
+    .close-btn { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 45px; font-weight: 300; transition: 0.3s; cursor: pointer; line-height: 1; z-index: 10000; }
+    .close-btn:hover { color: #f56565; transform: scale(1.1); }
+
+    /* ================= EXT INTRO BANNER (DATA ENTRY) ================= */
+    .ext-link-banner { background: linear-gradient(135deg, #ebf8ff, #bee3f8); border: 1px solid #90cdf4; padding: 18px 20px; border-radius: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); }
+    .ext-link-banner:hover { box-shadow: var(--shadow-md); }
+    .ext-btn { background: #3182ce; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; box-shadow: 0 4px 6px rgba(49,130,206,0.3); transition: 0.3s; white-space: nowrap; }
+    .ext-btn:hover { background: #2b6cb0; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(49,130,206,0.4); color: white; }
+
+    /* ================= RESPONSIVE ================= */
+    @media (max-width: 768px) {
+      .dashboard-wrapper { flex-direction: column; gap: 15px; }
+      .main-content { padding: 20px 15px; border-radius: 12px; }
+      .app-header { font-size: 18px; padding: 15px; margin-bottom: 15px; border-radius: 10px; }
+      .sidebar.tab-nav { width: 100%; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; padding: 10px; position: static; box-shadow: none; border: 1px solid var(--border-color); }
+      .sidebar-title { display: none; }
+      .tab-btn { width: auto; padding: 10px 15px; margin-bottom: 0; margin-right: 8px; border-left: none; border-bottom: 3px solid transparent; border-radius: 8px; white-space: nowrap; }
+      .tab-btn.active { border-left: none; border-bottom: 3px solid var(--primary); }
+      .entry-section { padding: 15px; }
+      .ext-link-banner { flex-direction: column; text-align: center; gap: 15px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-header">
+    <div style="font-size: 24px; margin-bottom: 8px;">🏥 प्राथमिक आरोग्य केंद्र, भादा</div>
+    <div style="font-size: 16px; font-weight: 500; opacity: 0.9; letter-spacing: 0.5px; border-top: 1px dashed rgba(255,255,255,0.3); padding-top: 8px; display: inline-block;">
+      राष्ट्रीय कीटकजन्य रोग नियंत्रण कार्यक्रम मॅनेजमेंट सिस्टीम
+    </div>
+  </div>
+
+  <div class="dashboard-wrapper">
+    <div class="sidebar tab-nav">
+      <div class="sidebar-title">मुख्य मेनू</div>
+      <button class="tab-btn active" onclick="switchTab('dashboardTab', this)">📊 डॅशबोर्ड</button>
+      <button class="tab-btn" onclick="switchTab('dataEntry', this)">📝 डेटा एन्ट्री</button>
+      <button class="tab-btn" onclick="switchTab('reportTab', this)">📑 अहवाल</button>
+      <button class="tab-btn" onclick="switchTab('downloadTab', this)">📥 डाऊनलोड्स</button>
+      <button class="tab-btn" onclick="switchTab('photoTab', this)">🖼️ गॅलरी</button>
+      <button class="tab-btn" onclick="switchTab('linksTab', this)">🔗 महत्त्वाच्या लिंक्स</button>
+    </div>
+
+    <div class="main-content">
+      
+      <div id="dashboardTab" class="tab-pane active">
+        <h3 style="color:var(--primary-dark); margin-top:0; border-bottom:2px solid var(--border-color); padding-bottom:10px;">मासिक आढावा (चालू महिना)</h3>
+        <div id="dashLoader" style="text-align:center; padding:50px; color:var(--primary); font-weight:bold;">डेटा लोड होत आहे... ⏳</div>
+        <div id="dashContent" style="display:none;">
+          <div class="stats-container">
+            <div class="stat-card card-total"><h4>एकूण नमुने</h4><div class="value" id="dTotal">0</div><span class="sub-text" style="background:#e2e8f0; color:#4a5568;">Total Samples</span></div>
+            <div class="stat-card card-active"><h4>ॲक्टिव्ह</h4><div class="value" id="dActive" style="color:var(--active-color);">0</div><span class="sub-text" id="dActiveP" style="background:#f0fff4; color:var(--active-color);">0%</span></div>
+            <div class="stat-card card-passive"><h4>पॅसिव्ह</h4><div class="value" id="dPassive" style="color:var(--passive-color);">0</div><span class="sub-text" id="dPassiveP" style="background:#ebf8ff; color:var(--passive-color);">0%</span></div>
+          </div>
+          <h4 style="margin-bottom:15px; color:var(--text-muted);">ग्राफिकल विश्लेषण</h4>
+          <div class="chart-box"><canvas id="myChart"></canvas></div>
+          <div style="text-align:center; font-size:12px; color:#999;">* Active = आरोग्य सेवक/सेविका/आशा | Passive = इतर (प्रा.आ.केंद्र/OPD)</div>
+        </div>
+      </div>
+
+      <div id="dataEntry" class="tab-pane">
+        
+        <div class="ext-link-banner">
+          <div>
+            <h4 style="margin:0; color:#2b6cb0; font-size:16px;">📝 Index Report Entry</h4>
+            <p style="margin:5px 0 0 0; font-size:13px; color:#4a5568;">इंडेक्स रिपोर्ट डेटा भरण्यासाठी खालील लिंकवर क्लिक करून फॉर्म उघडा.</p>
+          </div>
+          <a href="https://script.google.com/macros/s/AKfycbzx9eLKm6P2gQu2ub-vR_NdJaWAf3CKfweoThJd4polcFq2s03YIcZQqcdlhA-oqmxL/exec" target="_blank" class="ext-btn">
+            फॉर्म उघडा ↗️
+          </a>
+        </div>
+
+        <h3 style="color:var(--primary-dark); margin-top:0; border-bottom:2px solid var(--border-color); padding-bottom:10px; margin-bottom:20px;">नवीन रक्त नमुने नोंदणी</h3>
+        <div class="form-group"><label>निवडा तारीख</label><input type="date" id="commonDate" onchange="handleDateChange()"></div>
+        <div id="loader" style="text-align:center; color:var(--primary); font-weight:bold; margin:20px 0;">माहिती लोड होत आहे... ⏳</div>
+        <div id="entriesContainer"></div>
+        <button type="button" class="add-btn" onclick="addEntry()">+ नवीन कर्मचारी जोडा</button>
+        <div id="actionArea" style="display:none;"><button class="submit-btn" onclick="submitForm(this)">✅ डेटा सुरक्षित जतन करा</button></div>
+      </div>
+
+      <div id="reportTab" class="tab-pane">
+        <div id="reportMenu">
+          <h3 style="color:var(--primary-dark); margin-top:0; border-bottom:2px solid var(--border-color); padding-bottom:10px; margin-bottom:20px;">उपलब्ध अहवालांची यादी</h3>
+          <div class="report-menu-item" onclick="openReportForm('cardDaily')"><div class="rm-icon" style="color:#dd6b20;">🖨️</div><div class="rm-details"><span class="rm-title">दैनिक पत्र (Letter Print)</span><span class="rm-desc">विशिष्ट तारखेचे रक्त नमुने तपासणी पत्र.</span></div><div class="rm-arrow">➡️</div></div>
+          <div class="report-menu-item" onclick="openReportForm('cardMonthly')"><div class="rm-icon" style="color:#2b6cb0;">📊</div><div class="rm-details"><span class="rm-title">मासिक अहवाल (Monthly PDF)</span><span class="rm-desc">गावनिहाय आणि उपकेंद्रनिहाय महिन्याचा अहवाल.</span></div><div class="rm-arrow">➡️</div></div>
+          <div class="report-menu-item" onclick="openReportForm('cardRegister')"><div class="rm-icon" style="color:#2f855a;">📗</div><div class="rm-details"><span class="rm-title">कर्मचारी नोंदवही (Register)</span><span class="rm-desc">चालू वर्षातील कर्मचाऱ्यांचा वैयक्तिक अहवाल.</span></div><div class="rm-arrow">➡️</div></div>
+          <div class="report-menu-item" onclick="openReportForm('cardNotice')"><div class="rm-icon" style="color:#c53030;">⚠️</div><div class="rm-details"><span class="rm-title">कारणे दाखवा नोटीस</span><span class="rm-desc">उद्दिष्ट पूर्ण न केलेल्या कर्मचाऱ्यांसाठी नोटीस.</span></div><div class="rm-arrow">➡️</div></div>
+          <div class="report-menu-item" onclick="openReportForm('cardLowPerf')"><div class="rm-icon" style="color:#6b46c1;">📉</div><div class="rm-details"><span class="rm-title">कमी कामगिरी अहवाल</span><span class="rm-desc">निरंक आणि ७५% पेक्षा कमी कामगिरीची यादी.</span></div><div class="rm-arrow">➡️</div></div>
+        </div>
+
+        <div id="reportForms" style="display:none;">
+          <button class="back-btn" onclick="showReportMenu()">🔙 अहवालांच्या यादीत परत जा</button>
+          
+          <div id="cardDaily" class="report-card" style="border-left: 5px solid #ed8936;"><h3 style="color:#dd6b20; margin-top:0;">🖨️ दैनिक पत्र</h3><div class="form-group"><label>तारीख निवडा</label><input type="date" id="dailyReportDate"></div><button class="report-btn" style="background:#dd6b20;" onclick="generateDailyLetter(this)">पत्राची PDF तयार करा</button><div id="dailyReportStatus" style="margin-top:15px; font-weight:bold; display:none; text-align:center;"></div></div>
+          <div id="cardMonthly" class="report-card" style="border-left: 5px solid #3182ce;"><h3 style="color:#2b6cb0; margin-top:0;">📊 मासिक अहवाल</h3><div class="form-group"><label>महिना निवडा</label><select id="reportMonthSelect"><option value="">लोड होत आहे...</option></select></div><button class="report-btn" style="background:#3182ce;" onclick="generateReport(this)">मासिक रिपोर्ट जनरेट करा</button><div id="reportStatus" style="margin-top:15px; font-weight:bold; display:none; text-align:center;"></div></div>
+          <div id="cardRegister" class="report-card" style="border-left: 5px solid #38a169;"><h3 style="color:#2f855a; margin-top:0;">📗 कर्मचारी नोंदवही</h3><div class="filter-row"><div class="form-group"><label>उपकेंद्र</label><select id="regUpkendraSelect" onchange="filterRegEmps(this)"><option value="All">-- सर्व --</option></select></div><div class="form-group"><label>कर्मचारी</label><select id="regEmpSelect"><option value="All">-- सर्व --</option></select></div></div><button class="report-btn" style="background:#38a169;" onclick="generateEmployeeReg(this)">नोंदवही (PDF) तयार करा</button><div id="empRegStatus" style="margin-top:15px; font-weight:bold; display:none; text-align:center;"></div></div>
+          <div id="cardNotice" class="report-card" style="border-left: 5px solid #e53e3e;"><h3 style="color:#c53030; margin-top:0;">⚠️ कारणे दाखवा नोटीस</h3><div class="form-group"><label>महिना निवडा</label><select id="noticeMonthSelect" onchange="loadDefaulters(this.value)"><option value="">लोड होत आहे...</option></select></div><div id="defaulterLoader" style="display:none; color:#c53030; font-weight:bold; text-align:center;">शोधत आहे... ⏳</div><div id="defaulterListContainer" class="checkbox-list"></div><button class="report-btn" style="background:#c53030;" onclick="generateNotices(this)">निवडलेल्यांची नोटीस (PDF)</button><div id="noticeStatus" style="margin-top:15px; font-weight:bold; display:none; text-align:center;"></div></div>
+          <div id="cardLowPerf" class="report-card" style="border-left: 5px solid #805ad5;"><h3 style="color:#6b46c1; margin-top:0;">📉 कमी कामगिरी अहवाल</h3><div class="form-group"><label>महिना निवडा</label><select id="lowPerfMonthSelect"><option value="">लोड होत आहे...</option></select></div><button class="report-btn" style="background:#805ad5;" onclick="generateLowPerformanceReport(this)">अहवाल (PDF) तयार करा</button><div id="lowPerfStatus" style="margin-top:15px; font-weight:bold; display:none; text-align:center;"></div></div>
+        </div>
+      </div>
+
+      <div id="downloadTab" class="tab-pane">
+        <h3 style="color:var(--primary-dark); margin-top:0; border-bottom:2px solid var(--border-color); padding-bottom:10px;">महत्त्वाचे दस्तऐवज व फॉर्म्स</h3>
+        <div id="downloadsLoader" style="text-align:center; color:var(--primary); font-weight:bold; margin-top:30px;">ड्राईव्हमधून माहिती शोधत आहे... ⏳</div>
+        <div id="downloadsContainer" style="margin-top:20px;"></div>
+      </div>
+
+      <div id="photoTab" class="tab-pane">
+        <h3 style="color:var(--primary-dark); margin-top:0; border-bottom:2px solid var(--border-color); padding-bottom:10px;">कार्यक्रमांची क्षणचित्रे</h3>
+        <div id="photosLoader" style="text-align:center; color:var(--primary); font-weight:bold; margin-top:30px;">ड्राईव्हमधून फोटो शोधत आहे... ⏳</div>
+        <div id="photosContainer" style="margin-top:20px;"></div>
+      </div>
+
+      <div id="linksTab" class="tab-pane">
+        <h3 style="color:var(--primary-dark); margin-top:0; border-bottom:2px solid var(--border-color); padding-bottom:10px; margin-bottom:20px;">🔗 महत्त्वाच्या लिंक्स (Important Links)</h3>
+        
+        <div id="linksLoader" style="text-align:center; color:var(--primary); font-weight:bold; margin-top:30px;">लिंक्स लोड होत आहेत... ⏳</div>
+        <div id="linksContainer" class="dl-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="app-footer">
+    <p style="margin: 0 0 6px 0;"><b>&copy; २०२६ प्राथमिक आरोग्य केंद्र, भादा.</b> सर्व हक्क सुरक्षित.</p>
+    <p style="margin: 0;">उत्तम आरोग्य सेवेसाठी तंत्रज्ञानाची जोड <span class="heart">❤️</span></p>
+  </div>
+
+  <div id="myModal" class="modal">
+    <span class="close-btn" onclick="closeModal()">&times;</span>
+    <img class="modal-content" id="img01">
+    <div id="caption" class="modal-caption"></div>
+  </div>
+
+  <template id="entryTemplate">
+    <div class="entry-section">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">
+        <span style="font-weight:700; color:var(--primary-dark); font-size:16px;">👤 कर्मचारी #<span class="count">1</span></span>
+        <button onclick="removeEntry(this)" style="color:#e53e3e; border:none; background:rgba(229,62,62,0.1); padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:bold; transition:0.2s;">काढून टाका 🗑️</button>
+      </div>
+      <div class="form-group"><label>बंडल क्रमांक</label><input type="text" class="bundle-input" readonly></div>
+      <div class="form-group"><label>उपकेंद्र</label><select class="upkendra-select" onchange="filterEmps(this)"><option value="">-- निवडा --</option></select></div>
+      <div class="form-group"><label>कर्मचारी नाव</label><select class="emp-select" onchange="loadPrev(this)"><option value="">-- निवडा --</option></select></div>
+      <div style="display:flex; gap:15px; margin-bottom:15px;">
+        <div style="flex:1;"><label>पासून (क्रमांक)</label><input type="number" class="pasun-input" oninput="updateTot(this)" min="0"><div class="last-info info-box">कर्मचारी निवडा...</div></div>
+        <div style="flex:1;"><label>पर्यंत (क्रमांक)</label><input type="number" class="paraynt-input" oninput="updateTot(this)" min="0"></div>
+      </div>
+      <div class="form-group"><label>एकूण रक्त नमुने</label><input type="number" class="tot-input" readonly></div>
+      <div style="margin-top:25px; padding-top:15px; border-top:2px dashed #cbd5e0;">
+        <h4 style="margin:0 0 15px 0; color:var(--primary-dark); font-size:15px;">📍 गावनिहाय तपशील</h4>
+        <div class="v-container"></div>
+        <button type="button" class="add-btn" style="margin-top:10px; margin-bottom:5px; padding:10px;" onclick="addV(this)">+ गाव जोडा</button>
+        <div class="val-msg" style="display:none;">⚠️ बेरीज जुळत नाही! एकूण नमुने आणि गावनिहाय बेरीज तपासा.</div>
+      </div>
+      <datalist class="v-datalist"></datalist>
+    </div>
+  </template>
+  
+  <template id="vTemplate">
+    <div class="village-entry">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <input type="text" class="v-name" placeholder="गावाचे नाव (लिहा किंवा निवडा)" style="width:85%; border-color:#cbd5e0;">
+        <button onclick="vRemove(this)" style="color:#e53e3e; border:none; background:none; cursor:pointer; font-weight:bold; font-size:18px;">✕</button>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <input type="number" class="v-tot" placeholder="एकूण" oninput="vLogic(this)" style="flex:1;" min="0">
+        <input type="number" class="v-male" placeholder="पुरुष" oninput="vLogic(this)" style="flex:1;" min="0">
+        <input type="number" class="v-fem" placeholder="स्त्री" readonly style="flex:1; background:#f0fff4; color:#276749; font-weight:bold;">
+      </div>
+    </div>
+  </template>
+
+  <script>
+    let masterData = []; let bundleStart = 0; let monthsLoaded = false;
+    let downloadsLoaded = false; let photosLoaded = false; let dashLoaded = false; let linksLoaded = false;
+    let dlHistory = []; let currentDlFolder = null;
+    let photoHistory = []; let currentPhotoFolder = null;
+    let myChart = null;
+
+    window.onload = () => {
+      document.getElementById('commonDate').valueAsDate = new Date();
+      document.getElementById('dailyReportDate').valueAsDate = new Date(); 
+      loadDashboard();
+      google.script.run.withSuccessHandler(data => {
+        masterData = data;
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('actionArea').style.display = 'block';
+        handleDateChange();
+        const regUpS = document.getElementById('regUpkendraSelect');
+        [...new Set(masterData.map(d => d.upkendra))].forEach(u => regUpS.add(new Option(u, u)));
+      }).getMasterData();
+    };
+
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
+
+      if (tabId === 'dashboardTab' && !dashLoaded) { loadDashboard(); }
+      if (tabId === 'reportTab' && !monthsLoaded) {
+        google.script.run.withSuccessHandler(months => {
+          const rSelect = document.getElementById('reportMonthSelect'); const nSelect = document.getElementById('noticeMonthSelect'); const lSelect = document.getElementById('lowPerfMonthSelect'); 
+          rSelect.innerHTML = '<option value="">-- महिना निवडा --</option>'; nSelect.innerHTML = '<option value="">-- महिना निवडा --</option>'; lSelect.innerHTML = '<option value="">-- महिना निवडा --</option>';
+          months.forEach(m => { rSelect.add(new Option(m, m)); nSelect.add(new Option(m, m)); lSelect.add(new Option(m, m)); });
+          monthsLoaded = true;
+        }).getMonthListForWebApp();
+      }
+      if (tabId === 'downloadTab' && !downloadsLoaded) { loadDlFolder(null); downloadsLoaded = true; }
+      if (tabId === 'photoTab' && !photosLoaded) { loadPhotoFolder(null); photosLoaded = true; }
+      if (tabId === 'linksTab' && !linksLoaded) { loadImportantLinks(); linksLoaded = true; }
+    }
+
+    // --- IMPORTANT LINKS (DYNAMIC) ---
+    function loadImportantLinks() {
+      document.getElementById('linksLoader').style.display = 'block';
+      document.getElementById('linksContainer').innerHTML = '';
+      google.script.run.withSuccessHandler(renderImportantLinks).getImportantLinks();
+    }
+
+    function renderImportantLinks(res) {
+      document.getElementById('linksLoader').style.display = 'none';
+      const container = document.getElementById('linksContainer');
+      let html = '';
+      if (res.success) {
+        if (res.data.length > 0) {
+          const colors = ['#3182ce', '#38a169', '#dd6b20', '#e53e3e', '#805ad5', '#00796b']; 
+          res.data.forEach((link, index) => {
+            let color = colors[index % colors.length];
+            html += `
+            <a href="${link.url}" target="_blank" class="dl-item" style="border-left: 5px solid ${color};">
+              <div style="display:flex; align-items:center; gap:15px;">
+                <div style="font-size:24px; background:#f8fafc; padding:12px; border-radius:10px;">${link.icon}</div>
+                <div>
+                  <span style="display:block; font-size:16px; font-weight:700; color:var(--text-main);">${link.name}</span>
+                  <span style="font-size:13px; color:var(--text-muted); font-weight:500;">${link.desc}</span>
+                </div>
+              </div>
+              <span style="font-size:20px; color:${color};">↗️</span>
+            </a>`;
+          });
+        } else { html = `<p style="text-align:center; color:#718096; padding:20px;">कोणत्याही लिंक्स उपलब्ध नाहीत.</p>`; }
+      } else { html = `<p style="color:red; text-align:center;">${res.message}</p>`; }
+      container.innerHTML = html;
+    }
+
+    // --- DASHBOARD ---
+    function loadDashboard() {
+      google.script.run.withSuccessHandler(renderDashboard).getDashboardStats();
+    }
+    function renderDashboard(res) {
+      document.getElementById('dashLoader').style.display = 'none';
+      document.getElementById('dashContent').style.display = 'block';
+      if(res.success) {
+        const d = res.data;
+        document.getElementById('dTotal').textContent = d.total;
+        document.getElementById('dActive').textContent = d.active;
+        document.getElementById('dPassive').textContent = d.passive;
+        document.getElementById('dActiveP').textContent = d.activePercent + "%";
+        document.getElementById('dPassiveP').textContent = d.passivePercent + "%";
+
+        const ctx = document.getElementById('myChart').getContext('2d');
+        if(myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Active (फिल्ड)', 'Passive (OPD)'],
+            datasets: [{ data: [d.active, d.passive], backgroundColor: ['#38a169', '#3182ce'], borderWidth: 0 }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '70%' }
+        });
+      }
+      dashLoaded = true;
+    }
+
+    // --- REPORTS MENU ---
+    function openReportForm(cardId) {
+      document.getElementById('reportMenu').style.display = 'none';
+      document.getElementById('reportForms').style.display = 'block';
+      document.querySelectorAll('.report-card').forEach(c => c.style.display = 'none');
+      document.getElementById(cardId).style.display = 'block';
+    }
+    function showReportMenu() {
+      document.getElementById('reportForms').style.display = 'none';
+      document.getElementById('reportMenu').style.display = 'block';
+    }
+
+    // --- DOWNLOADS ---
+    function loadDlFolder(folderId) {
+      document.getElementById('downloadsLoader').style.display = 'block';
+      document.getElementById('downloadsContainer').innerHTML = '';
+      google.script.run.withSuccessHandler(renderDownloads).withFailureHandler(e=>{document.getElementById('downloadsContainer').innerHTML=e.message;}).getDriveDownloads(folderId);
+    }
+    function renderDownloads(res) {
+      document.getElementById('downloadsLoader').style.display = 'none';
+      const container = document.getElementById('downloadsContainer'); let html = '';
+      if (dlHistory.length > 0) html += `<button class="back-btn" onclick="goBackDl()">🔙 मागे जा</button>`;
+      if (res.success) {
+        html += `<div style="display:flex; flex-direction:column; gap:12px;">`;
+        res.folders.forEach(f => { html += `<div onclick="navigateDlFolder('${f.id}')" style="background:linear-gradient(to right, #fffde7, #fff9c4); border:1px solid #fbc02d; padding:18px; border-radius:10px; cursor:pointer; display:flex; justify-content:space-between; font-weight:bold; color:#f57f17; box-shadow:0 2px 4px rgba(0,0,0,0.05);"><span>📁 ${f.name}</span><span style="font-size:20px;">➡️</span></div>`; });
+        res.files.forEach(f => { html += `<a href="${f.url}" target="_blank" style="background:#fff; border:1px solid #e2e8f0; padding:18px; border-radius:10px; display:flex; justify-content:space-between; text-decoration:none; color:#2d3748; font-weight:bold; box-shadow:0 2px 4px rgba(0,0,0,0.05);"><span>📄 ${f.name}</span><span style="font-size:20px;">⬇️</span></a>`; });
+        html += `</div>`;
+        if(res.folders.length===0 && res.files.length===0) html += `<p style="text-align:center; color:#718096;">हे फोल्डर रिकामे आहे.</p>`;
+      } else { html += `<p style="color:red; text-align:center;">${res.message}</p>`; }
+      container.innerHTML = html;
+    }
+    function navigateDlFolder(folderId) { dlHistory.push(currentDlFolder); currentDlFolder = folderId; loadDlFolder(folderId); }
+    function goBackDl() { if (dlHistory.length > 0) { currentDlFolder = dlHistory.pop(); loadDlFolder(currentDlFolder); } }
+
+    // --- PHOTO GALLERY ---
+    function loadPhotoFolder(folderId) {
+      document.getElementById('photosLoader').style.display = 'block';
+      document.getElementById('photosContainer').innerHTML = '';
+      google.script.run.withSuccessHandler(renderPhotos).withFailureHandler(e=>{document.getElementById('photosContainer').innerHTML=e.message;}).getDrivePhotos(folderId);
+    }
+    function renderPhotos(res) {
+      document.getElementById('photosLoader').style.display = 'none';
+      const container = document.getElementById('photosContainer'); let html = '';
+      if (photoHistory.length > 0) html += `<button class="back-btn" onclick="goBackPhoto()">🔙 मागे जा</button>`;
+      if (res.success) {
+        html += `<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:15px;">`;
+        res.folders.forEach(f => { html += `<div onclick="navigatePhotoFolder('${f.id}')" style="background:#fff9c4; border:1px solid #fbc02d; border-radius:12px; display:flex; flex-direction:column; justify-content:center; align-items:center; cursor:pointer; padding:30px 10px; text-align:center; box-shadow:0 2px 4px rgba(0,0,0,0.05);"><div style="font-size:35px; margin-bottom:5px;">🗂️</div><div style="font-size:14px; font-weight:bold; color:#b7791f;">${f.name}</div></div>`; });
+        res.files.forEach(p => {
+          let safeUrl = p.fullUrl ? p.fullUrl.replace(/'/g, "\\'").replace(/"/g, "&quot;") : ''; let safeName = p.name ? p.name.replace(/'/g, "\\'").replace(/"/g, "&quot;") : ''; let safeDesc = p.description ? p.description.replace(/'/g, "\\'").replace(/"/g, "&quot;") : '';
+          let descHtml = p.description ? `<div style="font-size:12px; color:#718096; margin-top:5px; line-height:1.4;">${p.description}</div>` : '';
+          html += `<div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; box-shadow:0 2px 4px rgba(0,0,0,0.05); display:flex; flex-direction:column;"><img src="${p.url}" loading="lazy" onclick="openModal('${safeUrl}', '${safeName}', '${safeDesc}')" style="width:100%; height:130px; object-fit:cover; cursor:pointer; border-bottom:1px solid #edf2f7;"><div style="padding:10px; font-size:13px; color:#2d3748; background:#fafafa; flex-grow:1; white-space:normal;"><strong style="color:#00796b;">${p.name}</strong>${descHtml}</div></div>`;
+        });
+        html += `</div>`;
+        if(res.folders.length===0 && res.files.length===0) html += `<p style="text-align:center; color:#718096;">हे फोल्डर रिकामे आहे.</p>`;
+      } else { html += `<p style="color:red; text-align:center;">${res.message}</p>`; }
+      container.innerHTML = html;
+    }
+    function navigatePhotoFolder(folderId) { photoHistory.push(currentPhotoFolder); currentPhotoFolder = folderId; loadPhotoFolder(folderId); }
+    function goBackPhoto() { if (photoHistory.length > 0) { currentPhotoFolder = photoHistory.pop(); loadPhotoFolder(currentPhotoFolder); } }
+
+    function openModal(imgSrc, name, desc) {
+      document.getElementById("myModal").style.display = "block"; document.getElementById("img01").src = imgSrc;
+      let captionText = `<b style="color:#fff; font-size:20px;">${name}</b>`;
+      if (desc) captionText += `<br><span style="font-size:15px; color:#e2e8f0; margin-top:8px; display:inline-block;">${desc}</span>`;
+      document.getElementById("caption").innerHTML = captionText;
+    }
+    function closeModal() { document.getElementById("myModal").style.display = "none"; }
+
+    // --- DATA ENTRY & REPORTS LOGIC ---
+    function filterRegEmps(el) { const empS = document.getElementById('regEmpSelect'); empS.innerHTML = '<option value="All">-- सर्व --</option>'; if (el.value !== "All") { masterData.filter(d => d.upkendra === el.value).forEach(d => empS.add(new Option(d.employeeName, d.employeeName))); } }
+    function loadDefaulters(month) { const container = document.getElementById('defaulterListContainer'); const loader = document.getElementById('defaulterLoader'); container.innerHTML = ''; container.style.display = 'none'; if (!month) return; loader.style.display = 'block'; google.script.run.withSuccessHandler(res => { loader.style.display = 'none'; if (res.success) { if (res.defaulters.length === 0) { container.innerHTML = '<span style="color:#38a169; font-weight:bold; display:block; text-align:center; padding:10px;">सर्व कर्मचाऱ्यांचे उद्दिष्ट पूर्ण आहे! 🎉</span>'; container.style.display = 'block'; } else { let html = '<div class="checkbox-header"><input type="checkbox" id="selectAllDefaulters" onchange="toggleAllDefaulters(this)" checked> सर्व निवडा (' + res.defaulters.length + ' कर्मचारी)</div>'; res.defaulters.forEach((d) => { html += `<label class="checkbox-item"><input type="checkbox" class="defaulter-cb" value="${d.name}" checked> <span><b>${d.name}</b> <span style="color:#718096; font-size:13px;">(${d.sc}) - ${d.samplesCount} नमुने</span></span></label>`; }); container.innerHTML = html; container.style.display = 'block'; } } else { alert("एरर: " + res.message); } }).getDefaulterListForMonth(month); }
+    function toggleAllDefaulters(source) { const cbs = document.querySelectorAll('.defaulter-cb'); cbs.forEach(cb => cb.checked = source.checked); }
+
+    function showDownload(res, statusDiv, btn, btnText) { btn.disabled = false; btn.textContent = btnText; if (res.success) { if(res.base64) { const byteCharacters = atob(res.base64); const byteNumbers = new Array(byteCharacters.length); for (let i = 0; i < byteCharacters.length; i++) { byteNumbers[i] = byteCharacters.charCodeAt(i); } const byteArray = new Uint8Array(byteNumbers); const blob = new Blob([byteArray], {type: 'application/pdf'}); const blobUrl = URL.createObjectURL(blob); statusDiv.style.color = "#38a169"; statusDiv.innerHTML = res.message + `<br><br><a href="${blobUrl}" download="${res.filename}" style="background:#38a169; color:white; padding:12px 20px; text-decoration:none; border-radius:8px; display:inline-flex; align-items:center; gap:8px; font-weight:bold; box-shadow:0 4px 6px rgba(56,161,105,0.2); transition:0.2s;">📥 PDF डाऊनलोड करा</a>`; } else { statusDiv.style.color = "#38a169"; statusDiv.innerHTML = res.message + (res.url ? `<br><br><a href="${res.url}" target="_blank" style="background:#38a169; color:white; padding:10px 15px; text-decoration:none; border-radius:5px; display:inline-block;">PDF पहा / डाऊनलोड करा</a>` : ""); } } else { statusDiv.style.color = "#e53e3e"; statusDiv.innerHTML = "⚠️ एरर: " + res.message; } }
+
+    function generateDailyLetter(btn) { const dateVal = document.getElementById('dailyReportDate').value; if (!dateVal) { alert("तारीख निवडा."); return; } btn.disabled = true; btn.textContent = "प्रोसेसिंग सुरू आहे... ⏳"; const statusDiv = document.getElementById('dailyReportStatus'); statusDiv.style.display = 'block'; statusDiv.innerHTML = "कृपया प्रतीक्षा करा..."; statusDiv.style.color = "#dd6b20"; google.script.run.withSuccessHandler(res => showDownload(res, statusDiv, btn, "पत्राची PDF तयार करा")).generateDailyMalariaReportWebApp(dateVal); }
+    function generateReport(btn) { const month = document.getElementById('reportMonthSelect').value; if (!month) { alert("महिना निवडा."); return; } btn.disabled = true; btn.textContent = "प्रोसेसिंग सुरू आहे... ⏳"; const statusDiv = document.getElementById('reportStatus'); statusDiv.style.display = 'block'; statusDiv.innerHTML = "कृपया प्रतीक्षा करा..."; statusDiv.style.color = "#3182ce"; google.script.run.withSuccessHandler(res => showDownload(res, statusDiv, btn, "मासिक रिपोर्ट जनरेट करा")).generateMonthlyReportWebApp(month); }
+    function generateEmployeeReg(btn) { const upkendra = document.getElementById('regUpkendraSelect').value; const employee = document.getElementById('regEmpSelect').value; btn.disabled = true; btn.textContent = "प्रोसेसिंग सुरू आहे... ⏳"; const statusDiv = document.getElementById('empRegStatus'); statusDiv.style.display = 'block'; statusDiv.innerHTML = "कृपया प्रतीक्षा करा..."; statusDiv.style.color = "#38a169"; google.script.run.withSuccessHandler(res => showDownload(res, statusDiv, btn, "नोंदवही (PDF) तयार करा")).generateEmployeeRegisterWebApp(upkendra, employee); }
+    function generateNotices(btn) { const month = document.getElementById('noticeMonthSelect').value; if (!month) { alert("महिना निवडा."); return; } const cbs = document.querySelectorAll('.defaulter-cb:checked'); if (cbs.length === 0) { alert("किमान एक कर्मचारी निवडा."); return; } const selectedEmpNames = Array.from(cbs).map(cb => cb.value); btn.disabled = true; btn.textContent = "प्रोसेसिंग सुरू आहे... ⏳"; const statusDiv = document.getElementById('noticeStatus'); statusDiv.style.display = 'block'; statusDiv.innerHTML = "कृपया प्रतीक्षा करा..."; statusDiv.style.color = "#e53e3e"; google.script.run.withSuccessHandler(res => showDownload(res, statusDiv, btn, "निवडलेल्यांची नोटीस (PDF)")).generateEmployeeNoticesWebApp(month, selectedEmpNames); }
+    function generateLowPerformanceReport(btn) { const month = document.getElementById('lowPerfMonthSelect').value; if (!month) { alert("महिना निवडा."); return; } btn.disabled = true; btn.textContent = "प्रोसेसिंग सुरू आहे... ⏳"; const statusDiv = document.getElementById('lowPerfStatus'); statusDiv.style.display = 'block'; statusDiv.innerHTML = "कृपया प्रतीक्षा करा..."; statusDiv.style.color = "#805ad5"; google.script.run.withSuccessHandler(res => showDownload(res, statusDiv, btn, "अहवाल (PDF) तयार करा")).generateLowPerformanceReportWebApp(month); }
+
+    function handleDateChange() { document.getElementById('entriesContainer').innerHTML = ''; google.script.run.withSuccessHandler(num => { bundleStart = num; addEntry(); }).getLatestBundleNumber(document.getElementById('commonDate').value); }
+    function addEntry() { const cont = document.getElementById('entriesContainer'); const clone = document.importNode(document.getElementById('entryTemplate').content, true); const id = cont.children.length + 1; const sec = clone.querySelector('.entry-section'); sec.setAttribute('data-id', id); clone.querySelector('.count').textContent = id; clone.querySelector('.bundle-input').value = "बंडल क्र-" + String(bundleStart + id).padStart(2, '0'); const upS = clone.querySelector('.upkendra-select'); [...new Set(masterData.map(d => d.upkendra))].forEach(u => upS.add(new Option(u, u))); cont.appendChild(clone); }
+    function filterEmps(el) { const empS = el.closest('.entry-section').querySelector('.emp-select'); empS.innerHTML = '<option value="">-- निवडा --</option>'; masterData.filter(d => d.upkendra === el.value).forEach(d => empS.add(new Option(d.employeeName, d.employeeName))); }
+    function loadPrev(el) { const sec = el.closest('.entry-section'); const date = document.getElementById('commonDate').value; const dl = sec.querySelector('.v-datalist'); dl.id = "dl_" + sec.getAttribute('data-id'); const emp = masterData.find(d => d.employeeName === el.value && d.upkendra === sec.querySelector('.upkendra-select').value); if(emp && emp.villageList) { dl.innerHTML = ''; emp.villageList.forEach(v => { const o = document.createElement('option'); o.value = v; dl.appendChild(o); }); } sec.querySelector('.last-info').textContent = "शोधत आहे..."; google.script.run.withSuccessHandler(last => { sec.querySelector('.last-info').innerHTML = "मागील शेवटचा क्रमांक: <b>" + last + "</b>"; sec.querySelector('.pasun-input').value = last + 1; sec.querySelector('.paraynt-input').value = last + 1; updateTot(sec.querySelector('.pasun-input')); if(sec.querySelector('.v-container').children.length === 0) addV(sec.querySelector('button[onclick*="addV"]')); }).getLastParayntValue(sec.querySelector('.upkendra-select').value, el.value, date); }
+    function addV(btn) { const sec = btn.closest('.entry-section'); const clone = document.importNode(document.getElementById('vTemplate').content, true); clone.querySelector('.v-name').setAttribute('list', sec.querySelector('.v-datalist').id); sec.querySelector('.v-container').appendChild(clone); }
+    function vLogic(el) { const p = el.closest('.village-entry'); const t = parseInt(p.querySelector('.v-tot').value) || 0; const m = parseInt(p.querySelector('.v-male').value) || 0; p.querySelector('.v-fem').value = (t >= m) ? (t - m) : 0; updateTot(el); }
+    function vRemove(btn) { const sec = btn.closest('.entry-section'); btn.parentElement.parentElement.remove(); updateTot(sec.querySelector('.pasun-input')); }
+    function updateTot(el) { const s = el.closest('.entry-section'); const p = parseInt(s.querySelector('.pasun-input').value) || 0; const t = parseInt(s.querySelector('.paraynt-input').value) || 0; const total = (t >= p) ? (t - p + 1) : 0; s.querySelector('.tot-input').value = total; let vSum = 0; s.querySelectorAll('.v-tot').forEach(i => vSum += parseInt(i.value) || 0); s.querySelector('.val-msg').style.display = (vSum !== total && total > 0) ? 'block' : 'none'; }
+    function removeEntry(btn) { if(document.getElementById('entriesContainer').children.length > 1) { btn.closest('.entry-section').remove(); } }
+    
+    function submitForm(btn) {
+      const data = []; let isValid = true;
+      document.querySelectorAll('.entry-section').forEach(s => {
+        const total = parseInt(s.querySelector('.tot-input').value) || 0; let vSum = 0; const vs = [];
+        s.querySelectorAll('.village-entry').forEach(v => { const vt = parseInt(v.querySelector('.v-tot').value) || 0; vSum += vt; vs.push({ villageName: v.querySelector('.v-name').value, sampleCount: vt, maleCount: v.querySelector('.v-male').value, femaleCount: v.querySelector('.v-fem').value }); });
+        if (total !== vSum) isValid = false;
+        const m = masterData.find(d => d.employeeName === s.querySelector('.emp-select').value);
+        data.push({ bsSendDate: document.getElementById('commonDate').value, bundleNumber: s.querySelector('.bundle-input').value, upkendra: s.querySelector('.upkendra-select').value, employeeName: s.querySelector('.emp-select').value, pasun: s.querySelector('.pasun-input').value, paraynt: s.querySelector('.paraynt-input').value, bsCode: m ? m.bsCode : "", designation: m ? m.designation : "", villageDetails: vs });
+      });
+      if(!isValid) { alert("⚠️ बेरीज जुळत नाही! कृपया फॉर्म आणि गावनिहाय नमुन्यांची संख्या तपासा."); return; }
+      btn.disabled = true; btn.textContent = "सबमिट होत आहे... ⏳";
+      google.script.run.withSuccessHandler(res => { alert(res.message); if(res.success) location.reload(); else { btn.disabled = false; btn.textContent = "✅ डेटा जतन करा"; } }).processForm(data);
+    }
+  </script>
+</body>
+</html>
